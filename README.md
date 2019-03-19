@@ -1,5 +1,8 @@
 # scalafmt-native
 
+![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/mrothy/scalafmt-native.svg)
+![MicroBadger Size](https://img.shields.io/microbadger/image-size/mrothy/scalafmt-native.svg)
+
 Statically-linked GraalVM "native image" binaries of [`scalafmt`] packaged for
 Docker. These are totally self-contained, start instantly, and do not require
 the JVM to run.
