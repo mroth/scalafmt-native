@@ -1,0 +1,39 @@
+parameters:
+  name: ''
+  platform: 'linux-amd64'  # currently macos-amd64 or linux-amd64
+  vmImage: 'ubuntu-16.04'
+  binPath: 'bin'
+  buildFlags: '' #extra build flags requested
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn:
+    - BuildJAR
+  pool: 
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    platform: ${{ parameters.platform }}
+    bin_path: ${{ parameters.binPath }}
+  steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: jar
+      targetPath: $(System.DefaultWorkingDirectory)
+  - script: |
+      curl -fsL https://github.com/oracle/graal/releases/download/vm-$(graalvm_version)/graalvm-ce-${GRAALVM_VERSION}-${PLATFORM}.tar.gz \
+        --output graalvm.tgz
+      tar xzf graalvm.tgz && rm -rf graalvm.tgz
+      mv graalvm-ce-$(graalvm_version) graalvm
+    displayName: Install GraalVM
+  - script: |
+      JAVA_OPTS="-Xmx=2g" ./graalvm/${BIN_PATH}/native-image \
+        ${BUILD_FLAGS} \
+        --no-fallback \
+        -jar ./scalafmt.jar \
+        scalafmt-native
+      ls -lh
+    displayName: Build ${{ parameters.platform }} native image
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: dist_${{ parameters.platform }}
+      targetPath: $(System.DefaultWorkingDirectory)/scalafmt-native
