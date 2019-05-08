@@ -28,6 +28,7 @@ RUN sbt cli/assembly
 # requires increase of max heap size to avoid OOM errors :-(
 RUN JAVA_OPTS="-Xmx=2g" native-image \
     --static \
+    --no-fallback \
     -jar scalafmt-cli/target/scala-2.12/scalafmt.jar \
     scalafmt-native
 
