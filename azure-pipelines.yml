@@ -1,0 +1,86 @@
+# Somse useful references found thus far:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/multiple-phases?view=azure-devops&tabs=yaml
+# https://github.com/peterheesterman/chit/blob/master/azure-pipelines.yml
+
+variables:
+  scalafmt_version: v2.0.0-RC7
+  graalvm_version: 1.0.0-rc16
+
+trigger:
+  branches:
+    include:
+    - refs/heads/*
+    - refs/tags/*
+
+jobs:
+# Initial task to compile a JAR, store as a pipeline artifact to be used by
+# downstream builders.
+- job: BuildJAR
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - script: |
+      echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
+      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
+      sudo apt-get update
+      sudo apt-get install sbt
+    displayName: Install SBT
+  - script: |
+      git clone https://github.com/scalameta/scalafmt --branch ${SCALAFMT_VERSION} --single-branch
+      cd scalafmt
+      sbt cli/assembly
+    displayName: Build scalafmt with assembly into JAR
+  - task: PublishPipelineArtifact@0
+    inputs:
+      targetPath: scalafmt/scalafmt-cli/target/scala-2.12/scalafmt.jar
+      artifactName: jar
+
+# Parallel native builders using template, each builds on corresponding OS and
+# packages into archive, then sends results into artifact pipeline.
+- template: ci/native-build.yml 
+  parameters:
+    name: BuildNative_Linux
+    platform: linux-amd64
+    vmImage: ubuntu-16.04
+    binPath: bin
+    buildFlags: '--static'
+
+- template: ci/native-build.yml
+  parameters:
+    name: BuildNative_macOS
+    platform: macOS-amd64
+    vmImage: macOS-10.14
+    binPath: Contents/Home/bin
+
+# Releaser, gets everything from artifact pipeline, and then uploads to GitHub
+# Releases if there is a semver tag.
+#
+# Currently this requires the GitHub "release" to not already exist due to
+# 'create' action usage, TODO: if this can be made to work with 'edit' as well.
+# Prior the 'edit' action was not working with 'auto' tag(?).
+- job: UploadReleases
+  dependsOn:
+    - BuildNative_macOS
+    - BuildNative_Linux
+  steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: dist_linux-amd64
+      targetPath: $(Build.ArtifactStagingDirectory)
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: dist_macOS-amd64
+      targetPath: $(Build.ArtifactStagingDirectory)
+  - script: ls -lh $(Build.ArtifactStagingDirectory)
+  - task: GithubRelease@0
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+    inputs:
+      gitHubConnection: 'GitHub-mroth-oauth'
+      repositoryName: 'mroth/scalafmt-native'
+      action: create
+      target: '$(Build.SourceVersion)'
+      tagSource: auto
+      # By default, all files in the $(Build.ArtifactStagingDirectory) directory will be uploaded.
+      # assets: '$(Build.ArtifactStagingDirectory)/*.tgz' 
+      assetUploadMode: replace  
+      addChangeLog: true

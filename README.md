@@ -6,14 +6,18 @@
 ](https://hub.docker.com/r/mrothy/scalafmt-native)
 
 Statically-linked GraalVM "native image" binaries of [`scalafmt`] packaged for
-Docker. These are totally self-contained, start instantly, and do not require
-the JVM to run.
+Linux, macOS, and Docker. These are totally self-contained, start instantly, and
+do not require the JVM to run.
 
 Full size is about 32MB uncompressed.
 
 [`scalafmt`]: https://scalameta.org/scalafmt/
 
-### Usage
+### macOS and Linux
+
+Download the latest version from the [releases page](https://github.com/mroth/scalafmt-native/releases/latest).
+
+### Docker
 Sample usage running on a local `src` directory:
 
     docker pull mrothy/scalafmt-native
