@@ -33,6 +33,8 @@ jobs:
         scalafmt-native
       ls -lh
     displayName: Build ${{ parameters.platform }} native image
+  - script: chmod a+x scalafmt-native
+    displayName: set executable bit on native image
   - task: PublishPipelineArtifact@0
     inputs:
       artifactName: dist_${{ parameters.platform }}
