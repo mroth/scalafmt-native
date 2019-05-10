@@ -14,6 +14,7 @@ jobs:
   variables:
     platform: ${{ parameters.platform }}
     bin_path: ${{ parameters.binPath }}
+    build_flags: ${{ parameters.buildFlags }}
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
@@ -32,7 +33,6 @@ jobs:
         -jar ./scalafmt.jar \
         scalafmt-native
       ls -lh
-      env
     displayName: Build ${{ parameters.platform }} native image
   - task: ArchiveFiles@2
     inputs:
