@@ -1,9 +1,9 @@
 parameters:
   name: ''
-  platform: 'linux-amd64'  # currently macos-amd64 or linux-amd64
-  vmImage: 'ubuntu-16.04'
-  binPath: 'bin'
-  buildFlags: '' #extra build flags requested
+  platform: linux-amd64  # currently macOS-amd64 or linux-amd64
+  vmImage: ubuntu-16.04
+  binPath: bin
+  buildFlags: '' # any extra build flags requested
 
 jobs:
 - job: ${{ parameters.name }}
@@ -32,10 +32,15 @@ jobs:
         -jar ./scalafmt.jar \
         scalafmt-native
       ls -lh
+      env
     displayName: Build ${{ parameters.platform }} native image
-  - script: chmod a+x scalafmt-native
-    displayName: set executable bit on native image
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: $(System.DefaultWorkingDirectory)/scalafmt-native
+      archiveType: 'tar'
+      tarCompression: 'gz'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/scalafmt-native_${{ parameters.platform }}.tgz'
   - task: PublishPipelineArtifact@0
     inputs:
       artifactName: dist_${{ parameters.platform }}
-      targetPath: $(System.DefaultWorkingDirectory)/scalafmt-native
+      targetPath: $(Build.ArtifactStagingDirectory)
