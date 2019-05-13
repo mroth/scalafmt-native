@@ -21,12 +21,17 @@ jobs:
       artifactName: jar
       targetPath: $(System.DefaultWorkingDirectory)
   - script: |
-      curl -fsL https://github.com/oracle/graal/releases/download/vm-$(graalvm_version)/graalvm-ce-${GRAALVM_VERSION}-${PLATFORM}.tar.gz \
+      curl -fsL https://github.com/oracle/graal/releases/download/vm-$(graalvm_version)/graalvm-ce-${PLATFORM}-${GRAALVM_VERSION}.tar.gz \
         --output graalvm.tgz
       tar xzf graalvm.tgz && rm -rf graalvm.tgz
       mv graalvm-ce-$(graalvm_version) graalvm
     displayName: Install GraalVM
   - script: |
+      set -e
+      ./graalvm/${BIN_PATH}/gu install native-image
+    displayName: Install native-image
+  - script: |
+      set -e
       JAVA_OPTS="-Xmx=2g" ./graalvm/${BIN_PATH}/native-image \
         ${BUILD_FLAGS} \
         --no-fallback \

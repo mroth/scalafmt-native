@@ -3,7 +3,7 @@
 #
 # Also see regarding potential future built-in native target support:
 # https://github.com/scalameta/scalafmt/issues/1172
-FROM oracle/graalvm-ce:1.0.0-rc16 as builder
+FROM oracle/graalvm-ce:19.0.0 as builder
 ARG SCALAFMT_VERSION=v2.0.0-RC7
 
 WORKDIR /root
@@ -11,10 +11,15 @@ WORKDIR /root
 # install sbt
 RUN curl https://bintray.com/sbt/rpm/rpm \
     -o /etc/yum.repos.d/bintray-sbt-rpm.repo && \
-    yum install -y sbt
+    yum --disablerepo=ol7_developer install -y sbt
+    # ^^ temporary fix for upstream repository issue, TODO: remove me later
+    # yum install -y sbt
 
 # other tools needed
 RUN yum install -y git zlib-static
+
+# native-image is no longer bundled with graalvm :-/
+RUN gu install native-image
 
 # get the source for the version of scalafmt we want
 RUN git clone https://github.com/scalameta/scalafmt \
