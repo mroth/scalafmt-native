@@ -27,6 +27,7 @@ jobs:
       mv graalvm-ce-$(graalvm_version) graalvm
     displayName: Install GraalVM
   - script: |
+      set -e
       JAVA_OPTS="-Xmx=2g" ./graalvm/${BIN_PATH}/native-image \
         ${BUILD_FLAGS} \
         --no-fallback \
