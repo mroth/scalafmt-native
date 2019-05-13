@@ -48,7 +48,7 @@ jobs:
 - template: ci/native-build.yml
   parameters:
     name: BuildNative_macOS
-    platform: macOS-amd64
+    platform: darwin-amd64
     vmImage: macOS-10.14
     binPath: Contents/Home/bin
 
@@ -69,7 +69,7 @@ jobs:
       targetPath: $(Build.ArtifactStagingDirectory)
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: dist_macOS-amd64
+      artifactName: dist_darwin-amd64
       targetPath: $(Build.ArtifactStagingDirectory)
   - script: ls -lh $(Build.ArtifactStagingDirectory)
   - task: GithubRelease@0

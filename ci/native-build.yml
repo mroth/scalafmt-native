@@ -21,7 +21,7 @@ jobs:
       artifactName: jar
       targetPath: $(System.DefaultWorkingDirectory)
   - script: |
-      curl -fsL https://github.com/oracle/graal/releases/download/vm-$(graalvm_version)/graalvm-ce-${GRAALVM_VERSION}-${PLATFORM}.tar.gz \
+      curl -fsL https://github.com/oracle/graal/releases/download/vm-$(graalvm_version)/graalvm-ce-${PLATFORM}-${GRAALVM_VERSION}.tar.gz \
         --output graalvm.tgz
       tar xzf graalvm.tgz && rm -rf graalvm.tgz
       mv graalvm-ce-$(graalvm_version) graalvm
