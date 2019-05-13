@@ -18,6 +18,9 @@ RUN curl https://bintray.com/sbt/rpm/rpm \
 # other tools needed
 RUN yum install -y git zlib-static
 
+# native-image is no longer bundled with graalvm :-/
+RUN gu install native-image
+
 # get the source for the version of scalafmt we want
 RUN git clone https://github.com/scalameta/scalafmt \
     --branch ${SCALAFMT_VERSION} --single-branch
