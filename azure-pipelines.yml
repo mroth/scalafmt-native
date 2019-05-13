@@ -4,7 +4,7 @@
 
 variables:
   scalafmt_version: v2.0.0-RC7
-  graalvm_version: 1.0.0-rc16
+  graalvm_version: '19.0.0'
 
 trigger:
   branches:
