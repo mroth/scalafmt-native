@@ -28,6 +28,10 @@ jobs:
     displayName: Install GraalVM
   - script: |
       set -e
+      ./graalvm/${BIN_PATH}/gu install native-image
+    displayName: Install native-image
+  - script: |
+      set -e
       JAVA_OPTS="-Xmx=2g" ./graalvm/${BIN_PATH}/native-image \
         ${BUILD_FLAGS} \
         --no-fallback \
