@@ -3,7 +3,7 @@
 # https://github.com/peterheesterman/chit/blob/master/azure-pipelines.yml
 
 variables:
-  scalafmt_version: v2.0.0
+  scalafmt_version: v2.0.1
   graalvm_version: '19.1.1'
 
 trigger:
