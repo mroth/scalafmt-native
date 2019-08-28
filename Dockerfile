@@ -11,9 +11,7 @@ WORKDIR /root
 # install sbt
 RUN curl https://bintray.com/sbt/rpm/rpm \
     -o /etc/yum.repos.d/bintray-sbt-rpm.repo && \
-    yum --disablerepo=ol7_developer install -y sbt
-    # ^^ temporary fix for upstream repository issue, TODO: remove me later
-    # yum install -y sbt
+    yum install -y sbt
 
 # other tools needed
 RUN yum install -y git zlib-static
