@@ -1,4 +1,4 @@
-name: build
+name: Build
 on: [push]
 
 # this format from Azure doesnt seem to be supported yet.
@@ -31,6 +31,7 @@ jobs:
           path: scalafmt/scalafmt-cli/target/scala-2.12/scalafmt.jar
           name: jar
 
+  # Use GraalVM on Linux to convert JAR to a native linux static binary
   native-image-linux:
     needs: [build-jar]
     runs-on: ubuntu-18.04
@@ -59,6 +60,7 @@ jobs:
           path: scalafmt-native_linux.tgz
           name: scalafmt-native_linux
 
+  # Use GraalVM on macOS to convert JAR to a native macOS binary
   native-image-mac:
     needs: [build-jar]
     runs-on: macOS-10.14
@@ -97,6 +99,7 @@ jobs:
           path: scalafmt-native_macOS.tgz
           name: scalafmt-native_macOS
 
+  # Collate artifacts, upload to GitHub Releases on semver tags
   releaser:
     needs: [native-image-linux, native-image-mac]
     runs-on: ubuntu-latest
@@ -110,7 +113,7 @@ jobs:
           name: scalafmt-native_linux
           path: .
       - run: ls -lh
-      # TODO: generate changelog?
+      # TODO: generate changelog? or just handle via bump
       - name: Release to GitHub
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
@@ -118,4 +121,3 @@ jobs:
           files: "scalafmt*.tgz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
