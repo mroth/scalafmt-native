@@ -72,15 +72,15 @@ jobs:
       artifactName: dist_darwin-amd64
       targetPath: $(Build.ArtifactStagingDirectory)
   - script: ls -lh $(Build.ArtifactStagingDirectory)
-  - task: GithubRelease@0
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
-    inputs:
-      gitHubConnection: 'GitHub-mroth-oauth'
-      repositoryName: 'mroth/scalafmt-native'
-      action: create
-      target: '$(Build.SourceVersion)'
-      tagSource: auto
-      # By default, all files in the $(Build.ArtifactStagingDirectory) directory will be uploaded.
-      # assets: '$(Build.ArtifactStagingDirectory)/*.tgz' 
-      assetUploadMode: replace  
-      addChangeLog: true
+  # - task: GithubRelease@0
+  #   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+  #   inputs:
+  #     gitHubConnection: 'GitHub-mroth-oauth'
+  #     repositoryName: 'mroth/scalafmt-native'
+  #     action: create
+  #     target: '$(Build.SourceVersion)'
+  #     tagSource: auto
+  #     # By default, all files in the $(Build.ArtifactStagingDirectory) directory will be uploaded.
+  #     # assets: '$(Build.ArtifactStagingDirectory)/*.tgz' 
+  #     assetUploadMode: replace  
+  #     addChangeLog: true
