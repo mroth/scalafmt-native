@@ -1,4 +1,4 @@
-name: Build
+name: build
 on: [push]
 
 # this format from Azure doesnt seem to be supported yet.
@@ -38,12 +38,12 @@ jobs:
       image: oracle/graalvm-ce:19.1.1
     steps:
       - name: install native-image
-        run:  gu install native-image
+        run: gu install native-image
       - uses: actions/download-artifact@v1
         with:
           name: jar
           path: .
-      - run: ls -lh
+      # - run: ls -lh
       - name: build Linux native image (static)
         run: |
           native-image \
@@ -51,14 +51,13 @@ jobs:
             --no-fallback \
             -jar ./scalafmt.jar \
             scalafmt-native
-      - run: ls -lh
+      # - run: ls -lh
       - run: tar -cvzf scalafmt-native_linux.tgz ./scalafmt-native
-      - run: ls -lh
+      # - run: ls -lh
       - uses: actions/upload-artifact@v1
         with:
           path: scalafmt-native_linux.tgz
           name: scalafmt-native_linux
-
 
   native-image-mac:
     needs: [build-jar]
@@ -66,7 +65,7 @@ jobs:
     steps:
       - name: download GraalVM release
         env:
-          VERSION: '19.1.1'
+          VERSION: "19.1.1"
           PLATFORM: darwin-amd64
         run: |
           curl -fsL https://github.com/oracle/graal/releases/download/vm-${VERSION}/graalvm-ce-${PLATFORM}-${VERSION}.tar.gz \
@@ -76,12 +75,12 @@ jobs:
       - name: install native-image
         env:
           BIN_PATH: Contents/Home/bin
-        run:  ./graalvm/${BIN_PATH}/gu install native-image
+        run: ./graalvm/${BIN_PATH}/gu install native-image
       - uses: actions/download-artifact@v1
         with:
           name: jar
           path: .
-      - run: ls -lh
+      # - run: ls -lh
       - name: Build macOS native image
         env:
           BIN_PATH: Contents/Home/bin
@@ -90,10 +89,33 @@ jobs:
             --no-fallback \
             -jar ./scalafmt.jar \
             scalafmt-native
-      - run: ls -lh
+      # - run: ls -lh
       - run: tar -cvzf scalafmt-native_macOS.tgz ./scalafmt-native
-      - run: ls -lh
+      # - run: ls -lh
       - uses: actions/upload-artifact@v1
         with:
           path: scalafmt-native_macOS.tgz
           name: scalafmt-native_macOS
+
+  releaser:
+    needs: [native-image-linux, native-image-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: scalafmt-native_macOS
+          path: .
+      - uses: actions/download-artifact@v1
+        with:
+          name: scalafmt-native_linux
+          path: .
+      - run: ls -lh
+      # TODO: generate changelog?
+      - name: Release to GitHub
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "scalafmt*.tgz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
