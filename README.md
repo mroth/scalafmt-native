@@ -1,5 +1,6 @@
 # scalafmt-native
 
+[![Build Status](https://github.com/mroth/scalafmt-native/workflows/Build/badge.svg)](https://github.com/mroth/scalafmt-native/actions)
 [
     ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/mrothy/scalafmt-native.svg)
     ![MicroBadger Size](https://img.shields.io/microbadger/image-size/mrothy/scalafmt-native.svg)
