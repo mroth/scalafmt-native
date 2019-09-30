@@ -1,0 +1,14 @@
+name: Verify docker build
+on: [push]
+
+# We currently use docker hub automated builds for reproducibility -- but those
+# are so very very slow, so do a GHA build as well (that we don't push
+# anywhere), just so we see failures in the Dockerfile in CI without waiting
+# forever for DockerHub status (which also doesn't report back via GH checks).
+jobs:
+  build-image:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - run: docker build -t mrothy/scalafmt-native .
+      - run: docker images
