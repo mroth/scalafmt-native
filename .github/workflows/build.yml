@@ -36,7 +36,7 @@ jobs:
     needs: [build-jar]
     runs-on: ubuntu-18.04
     container:
-      image: oracle/graalvm-ce:19.1.1
+      image: oracle/graalvm-ce:19.2.0.1
     steps:
       - name: install native-image
         run: gu install native-image
@@ -67,7 +67,7 @@ jobs:
     steps:
       - name: download GraalVM release
         env:
-          VERSION: "19.1.1"
+          VERSION: "19.2.0.1"
           PLATFORM: darwin-amd64
         run: |
           curl -fsL https://github.com/oracle/graal/releases/download/vm-${VERSION}/graalvm-ce-${PLATFORM}-${VERSION}.tar.gz \
