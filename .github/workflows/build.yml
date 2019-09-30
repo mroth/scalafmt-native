@@ -21,7 +21,7 @@ jobs:
           sudo apt-get install sbt
       - name: Build scalafmt with assembly into JAR
         env:
-          SCALAFMT_VERSION: v2.0.1
+          SCALAFMT_VERSION: v2.1.0
         run: |
           git clone https://github.com/scalameta/scalafmt --branch ${SCALAFMT_VERSION} --depth 1
           cd scalafmt

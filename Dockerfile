@@ -4,7 +4,7 @@
 # Also see regarding potential future built-in native target support:
 # https://github.com/scalameta/scalafmt/issues/1172
 FROM oracle/graalvm-ce:19.2.0.1 as builder
-ARG SCALAFMT_VERSION=v2.0.1
+ARG SCALAFMT_VERSION=v2.1.0
 
 WORKDIR /root
 
