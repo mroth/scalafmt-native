@@ -4,38 +4,36 @@
 # Also see regarding potential future built-in native target support:
 # https://github.com/scalameta/scalafmt/issues/1172
 FROM oracle/graalvm-ce:19.2.0.1 as builder
-ARG SCALAFMT_VERSION=v2.1.0
+ARG SCALAFMT_VERSION=2.1.0
 
-WORKDIR /root
+WORKDIR /root/scalafmt
 
-# install sbt
-RUN curl https://bintray.com/sbt/rpm/rpm \
-    -o /etc/yum.repos.d/bintray-sbt-rpm.repo && \
-    yum install -y sbt
-
-# other tools needed
-RUN yum install -y git zlib-static
-
-# native-image is no longer bundled with graalvm :-/
+# extra dependencies: zlib-static needed to produce static binaries
+RUN yum install -y zlib-static
+# graalvm native-image is no longer bundled
 RUN gu install native-image
 
-# get the source for the version of scalafmt we want
-RUN git clone https://github.com/scalameta/scalafmt \
-    --branch ${SCALAFMT_VERSION} --single-branch
+# install coursier
+RUN curl -s -Lo /usr/local/bin/coursier https://git.io/coursier-cli && \
+    chmod +x /usr/local/bin/coursier
 
-# build scalafmt
-WORKDIR /root/scalafmt
-RUN sbt cli/assembly
+# fetch scalafmt jars
+#
+# (keep track of where they were stored to use in classpath later,  persisting
+# list to file to move across shell invocations)
+RUN coursier fetch org.scalameta:scalafmt-cli_2.12:2.1.0 | paste -s -d ":" - \
+    > .classpath
 
 # convert to native staticly-linked binary
-# requires increase of max heap size to avoid OOM errors :-(
-RUN JAVA_OPTS="-Xmx=2g" native-image \
+ENV JAVA_OPTS="-Xmx=2g"
+RUN export CLASSPATH=$(<.classpath) && native-image \
     --static \
     --no-fallback \
-    -jar scalafmt-cli/target/scala-2.12/scalafmt.jar \
+    --report-unsupported-elements-at-runtime \
+    --class-path $CLASSPATH org.scalafmt.cli.Cli \
     scalafmt-native
 
-# scratch image with only binary
+# make scratch image with only binary
 FROM scratch
 COPY --from=builder /root/scalafmt/scalafmt-native /app/scalafmt
 ENTRYPOINT ["/app/scalafmt"]
