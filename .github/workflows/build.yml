@@ -63,8 +63,7 @@ jobs:
         env:
           SCALAFMT_VERSION: "2.1.0"
         run: |
-          coursier fetch org.scalameta:scalafmt-cli_2.12:${SCALAFMT_VERSION} | \
-          paste -s -d ":" - > .classpath
+          coursier fetch org.scalameta:scalafmt-cli_2.12:${SCALAFMT_VERSION} -p > .classpath
 
       - name: Build scalafmt with assembly into JAR
         env:

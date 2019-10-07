@@ -21,8 +21,7 @@ RUN curl -s -Lo /usr/local/bin/coursier https://git.io/coursier-cli && \
 #
 # (keep track of where they were stored to use in classpath later,  persisting
 # list to file to move across shell invocations)
-RUN coursier fetch org.scalameta:scalafmt-cli_2.12:2.1.0 | paste -s -d ":" - \
-    > .classpath
+RUN coursier fetch org.scalameta:scalafmt-cli_2.12:2.1.0 -p > .classpath
 
 # convert to native staticly-linked binary
 ENV JAVA_OPTS="-Xmx=2g"
