@@ -61,7 +61,7 @@ jobs:
 
       - name: Fetch scalafmt classes
         env:
-          SCALAFMT_VERSION: "2.1.0"
+          SCALAFMT_VERSION: "2.2.1"
         run: |
           coursier fetch org.scalameta:scalafmt-cli_2.12:${SCALAFMT_VERSION} -p > .classpath
 

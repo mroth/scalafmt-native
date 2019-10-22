@@ -4,7 +4,7 @@
 # Also see regarding potential future built-in native target support:
 # https://github.com/scalameta/scalafmt/issues/1172
 FROM oracle/graalvm-ce:19.2.0.1 as builder
-ARG SCALAFMT_VERSION=2.1.0
+ARG SCALAFMT_VERSION=2.2.1
 
 WORKDIR /root/scalafmt
 
@@ -21,7 +21,7 @@ RUN curl -s -Lo /usr/local/bin/coursier https://git.io/coursier-cli && \
 #
 # (keep track of where they were stored to use in classpath later,  persisting
 # list to file to move across shell invocations)
-RUN coursier fetch org.scalameta:scalafmt-cli_2.12:2.1.0 -p > .classpath
+RUN coursier fetch org.scalameta:scalafmt-cli_2.12:${SCALAFMT_VERSION} -p > .classpath
 
 # convert to native staticly-linked binary
 ENV JAVA_OPTS="-Xmx=2g"
