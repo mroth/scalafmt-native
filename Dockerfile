@@ -29,6 +29,8 @@ RUN export CLASSPATH=$(<.classpath) && native-image \
     --static \
     --no-fallback \
     --report-unsupported-elements-at-runtime \
+    --initialize-at-build-time \
+    --allow-incomplete-classpath \
     --class-path $CLASSPATH org.scalafmt.cli.Cli \
     scalafmt-native
 

@@ -77,6 +77,8 @@ jobs:
           ${GRAALVM_EXTRA_PARAMS} \
           --no-fallback \
           --report-unsupported-elements-at-runtime \
+          --initialize-at-build-time \
+          --allow-incomplete-classpath \
           --class-path $CLASSPATH org.scalafmt.cli.Cli \
           scalafmt-native
 
