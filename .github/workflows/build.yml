@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           path: scalafmt-native_${{ matrix.graalvm_platform }}.tgz
-          name: scalafmt_native_${{ matrix.graalvm_platform }}
+          name: scalafmt-native_${{ matrix.graalvm_platform }}
 
   # Collate artifacts, upload to GitHub Releases on semver tags
   releaser:
