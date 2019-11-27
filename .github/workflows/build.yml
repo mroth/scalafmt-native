@@ -99,7 +99,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v1
         with:
-          name: scalafmt-native_macOS-amd64
+          name: scalafmt-native_darwin-amd64
           path: .
       - uses: actions/download-artifact@v1
         with:
