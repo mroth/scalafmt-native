@@ -41,9 +41,10 @@ jobs:
       - name: Download GraalVM
         env:
           VERSION: "19.3.0"
+          JAVA_MAJOR: "java8"
           PLATFORM: ${{ matrix.graalvm_platform }}
         run: |
-          curl -fsL https://github.com/oracle/graal/releases/download/vm-${VERSION}/graalvm-ce-${PLATFORM}-${VERSION}.tar.gz \
+          curl -fsL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${VERSION}/graalvm-ce-${JAVA_MAJOR}-${PLATFORM}-${VERSION}.tar.gz \
             --output graalvm.tgz
           tar xzf graalvm.tgz && rm -rf graalvm.tgz
           sudo mv graalvm-ce-${VERSION} /usr/local/graalvm
