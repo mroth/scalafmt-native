@@ -1,119 +1,112 @@
 name: Build
 on: [push]
 
-# this format from Azure doesnt seem to be supported yet.
-# TODO: find these hardcoded values and eliminate with GHA version
 # variables:
-#   scalafmt_version: v2.0.1
-#   graalvm_version: '19.1.1'
+#   scalafmt_version: 'foo'
+#   graalvm_version: 'bar'
+#
+# ^^^ This format from Azure Dev Pipelines doesnt seem to be supported yet with
+# globally defining variables at top level of file :sadface:.
+#
+# TODO: eliminate hardcoded values once global vars are supported.
 
 jobs:
-  # Initial task to compile a JAR, store as a pipeline artifact to be used by
-  # downstream builders.
-  build-jar:
+  # We currently use docker hub automated builds for reproducibility -- but those
+  # are so very very slow, so do a GHA build as well (that we don't push
+  # anywhere), just so we see failures in the Dockerfile in CI without waiting
+  # forever for DockerHub status (which also doesn't report back via GH checks).
+  build-docker:
     runs-on: ubuntu-18.04
     steps:
-      - name: Install SBT
-        run: |
-          echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
-          sudo apt-get update
-          sudo apt-get install sbt
-      - name: Build scalafmt with assembly into JAR
-        env:
-          SCALAFMT_VERSION: v2.0.1
-        run: |
-          git clone https://github.com/scalameta/scalafmt --branch ${SCALAFMT_VERSION} --depth 1
-          cd scalafmt
-          sbt cli/assembly
-      - uses: actions/upload-artifact@v1
-        with:
-          path: scalafmt/scalafmt-cli/target/scala-2.12/scalafmt.jar
-          name: jar
+      - uses: actions/checkout@master
+      - run: docker build -t mrothy/scalafmt-native .
+      - run: docker images
 
-  # Use GraalVM on Linux to convert JAR to a native linux static binary
-  native-image-linux:
-    needs: [build-jar]
-    runs-on: ubuntu-18.04
-    container:
-      image: oracle/graalvm-ce:19.1.1
-    steps:
-      - name: install native-image
-        run: gu install native-image
-      - uses: actions/download-artifact@v1
-        with:
-          name: jar
-          path: .
-      # - run: ls -lh
-      - name: build Linux native image (static)
-        run: |
-          native-image \
-            --static \
-            --no-fallback \
-            -jar ./scalafmt.jar \
-            scalafmt-native
-      # - run: ls -lh
-      - run: tar -cvzf scalafmt-native_linux.tgz ./scalafmt-native
-      # - run: ls -lh
-      - uses: actions/upload-artifact@v1
-        with:
-          path: scalafmt-native_linux.tgz
-          name: scalafmt-native_linux
+  # Build native binaries for specific platforms
+  build-native:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-10.14, ubuntu-18.04]
+        include:
+          - os: ubuntu-18.04
+            graalvm_platform: linux-amd64
+            graalvm_bin_path: bin
+            graalvm_extra_params: "--static"
+          - os: macOS-10.14
+            graalvm_platform: darwin-amd64
+            graalvm_bin_path: Contents/Home/bin
 
-  # Use GraalVM on macOS to convert JAR to a native macOS binary
-  native-image-mac:
-    needs: [build-jar]
-    runs-on: macOS-10.14
     steps:
-      - name: download GraalVM release
+      - name: Download GraalVM
         env:
-          VERSION: "19.1.1"
-          PLATFORM: darwin-amd64
+          VERSION: "19.3.0"
+          JAVA_MAJOR: "java8"
+          PLATFORM: ${{ matrix.graalvm_platform }}
         run: |
-          curl -fsL https://github.com/oracle/graal/releases/download/vm-${VERSION}/graalvm-ce-${PLATFORM}-${VERSION}.tar.gz \
+          curl -fsL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${VERSION}/graalvm-ce-${JAVA_MAJOR}-${PLATFORM}-${VERSION}.tar.gz \
             --output graalvm.tgz
           tar xzf graalvm.tgz && rm -rf graalvm.tgz
-          mv graalvm-ce-${VERSION} graalvm
-      - name: install native-image
+          sudo mv graalvm-ce-${JAVA_MAJOR}-${VERSION} /usr/local/graalvm
+
+      - name: Install GraalVM native-image plugin
         env:
-          BIN_PATH: Contents/Home/bin
-        run: ./graalvm/${BIN_PATH}/gu install native-image
-      - uses: actions/download-artifact@v1
-        with:
-          name: jar
-          path: .
-      # - run: ls -lh
-      - name: Build macOS native image
-        env:
-          BIN_PATH: Contents/Home/bin
+          BIN_PATH: /usr/local/graalvm/${{ matrix.graalvm_bin_path }}
+        run: ${BIN_PATH}/gu install native-image
+
+      - name: Install Coursier
         run: |
-          ./graalvm/${BIN_PATH}/native-image \
-            --no-fallback \
-            -jar ./scalafmt.jar \
-            scalafmt-native
-      # - run: ls -lh
-      - run: tar -cvzf scalafmt-native_macOS.tgz ./scalafmt-native
-      # - run: ls -lh
+          curl -s -Lo coursier https://git.io/coursier-cli && \
+          chmod +x ./coursier && \
+          sudo mv ./coursier /usr/local/bin/coursier
+
+      - name: Fetch scalafmt classes
+        env:
+          SCALAFMT_VERSION: "2.2.2"
+        run: |
+          coursier fetch org.scalameta:scalafmt-cli_2.12:${SCALAFMT_VERSION} -p > .classpath
+
+      - name: Build scalafmt with assembly into JAR
+        env:
+          BIN_PATH: /usr/local/graalvm/${{ matrix.graalvm_bin_path }}
+          GRAALVM_EXTRA_PARAMS: ${{ matrix.graalvm_extra_params }}
+          JAVA_OPTS: "-Xmx=2g"
+        run: |
+          export CLASSPATH=$(<.classpath) && \
+          ${BIN_PATH}/native-image \
+          ${GRAALVM_EXTRA_PARAMS} \
+          --no-fallback \
+          --report-unsupported-elements-at-runtime \
+          --initialize-at-build-time \
+          --allow-incomplete-classpath \
+          --class-path $CLASSPATH org.scalafmt.cli.Cli \
+          scalafmt-native
+
+      - name: Create archive
+        env:
+          ARTIFACT: scalafmt-native_${{ matrix.graalvm_platform }}.tgz
+        run: tar -cvzf ${ARTIFACT} ./scalafmt-native
+
       - uses: actions/upload-artifact@v1
         with:
-          path: scalafmt-native_macOS.tgz
-          name: scalafmt-native_macOS
+          path: scalafmt-native_${{ matrix.graalvm_platform }}.tgz
+          name: scalafmt-native_${{ matrix.graalvm_platform }}
 
   # Collate artifacts, upload to GitHub Releases on semver tags
   releaser:
-    needs: [native-image-linux, native-image-mac]
+    needs: [build-native]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v1
         with:
-          name: scalafmt-native_macOS
+          name: scalafmt-native_darwin-amd64
           path: .
       - uses: actions/download-artifact@v1
         with:
-          name: scalafmt-native_linux
+          name: scalafmt-native_linux-amd64
           path: .
       - run: ls -lh
-      # TODO: generate changelog? or just handle via bump
+      # TODO: generate changelog? or just handle via https://github.com/mroth/bump
       - name: Release to GitHub
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
