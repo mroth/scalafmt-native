@@ -10,7 +10,7 @@ Statically-linked GraalVM "native image" binaries of [`scalafmt`] packaged for
 Linux, macOS, and Docker. These are totally self-contained, start instantly, and
 do not require the JVM to run.
 
-Full size is about 32MB uncompressed.
+:mortar_board: **DEPRECATED: This work has now been rolled into the official scalafmt repository!**
 
 [`scalafmt`]: https://scalameta.org/scalafmt/
 
